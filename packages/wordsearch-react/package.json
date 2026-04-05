@@ -1,0 +1,30 @@
+{
+  "name": "@gioguarino/wordsearch-react",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@gioguarino/wordsearch-core": "workspace:*",
+    "@gioguarino/wordsearch-pixi": "workspace:*",
+    "@gioguarino/wordsearch-types": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "lint": "eslint src --ext .ts,.tsx"
+  }
+}
