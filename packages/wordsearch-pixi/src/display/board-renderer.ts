@@ -1,30 +1,40 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 
 import type {
+  Cell,
   LayoutMetrics,
   WordSearchPuzzle,
   WordSearchTheme,
 } from '@gioguarino/wordsearch-types';
+
+import { FoundWordsRenderer } from './found-words-renderer';
+import { SelectionRenderer } from './selection-renderer';
 
 export class BoardRenderer {
   public readonly root: Container;
 
   private readonly backgroundLayer: Graphics;
   private readonly gridLayer: Graphics;
+  private readonly foundWordsLayer: FoundWordsRenderer;
+  private readonly selectionLayer: SelectionRenderer;
   private readonly lettersLayer: Container;
 
   constructor() {
     this.root = new Container();
     this.backgroundLayer = new Graphics();
     this.gridLayer = new Graphics();
+    this.foundWordsLayer = new FoundWordsRenderer();
+    this.selectionLayer = new SelectionRenderer();
     this.lettersLayer = new Container();
 
     this.root.addChild(this.backgroundLayer);
     this.root.addChild(this.gridLayer);
+    this.root.addChild(this.foundWordsLayer.root);
+    this.root.addChild(this.selectionLayer.root);
     this.root.addChild(this.lettersLayer);
   }
 
-  render(puzzle: WordSearchPuzzle, theme: WordSearchTheme, metrics: LayoutMetrics): void {
+  renderBase(puzzle: WordSearchPuzzle, theme: WordSearchTheme, metrics: LayoutMetrics): void {
     this.backgroundLayer.clear();
     this.gridLayer.clear();
     this.lettersLayer.removeChildren();
@@ -78,6 +88,22 @@ export class BoardRenderer {
         this.lettersLayer.addChild(text);
       }
     }
+  }
+
+  renderSelection(path: Cell[], metrics: LayoutMetrics, theme: WordSearchTheme): void {
+    this.selectionLayer.render(path, metrics, theme);
+  }
+
+  clearSelection(): void {
+    this.selectionLayer.clear();
+  }
+
+  renderFoundWords(paths: Cell[][], metrics: LayoutMetrics, theme: WordSearchTheme): void {
+    this.foundWordsLayer.render(paths, metrics, theme);
+  }
+
+  clearFoundWords(): void {
+    this.foundWordsLayer.clear();
   }
 
   destroy(): void {
