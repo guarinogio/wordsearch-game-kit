@@ -7,8 +7,10 @@ import {
 
 import { createPixiWordSearch } from '@gioguarino/wordsearch-pixi';
 
-import type { PixiWordSearchInstance, PixiWordSearchOptions } from '@gioguarino/wordsearch-pixi';
+import type { PixiWordSearchCallbacks, PixiWordSearchInstance, PixiWordSearchOptions } from '@gioguarino/wordsearch-pixi';
 import type { WordSearchBoardHandle, WordSearchBoardProps } from './types';
+
+import { useLatestRef } from './hooks/use-latest-ref';
 
 export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoardProps>(
   function WordSearchBoard(
@@ -26,6 +28,9 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const instanceRef = useRef<PixiWordSearchInstance | null>(null);
+
+    const callbacksRef = useLatestRef<PixiWordSearchCallbacks | undefined>(callbacks);
+    const onInstanceReadyRef = useLatestRef(onInstanceReady);
 
     useImperativeHandle(
       ref,
@@ -57,12 +62,45 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
 
       let disposed = false;
 
+      const wrappedCallbacks: PixiWordSearchCallbacks = {
+        onReady(instance) {
+          callbacksRef.current?.onReady?.(instance);
+        },
+        onEvent(event) {
+          callbacksRef.current?.onEvent?.(event);
+        },
+        onSelectionStart(event) {
+          callbacksRef.current?.onSelectionStart?.(event);
+        },
+        onSelectionChange(event) {
+          callbacksRef.current?.onSelectionChange?.(event);
+        },
+        onSelectionCommit(event) {
+          callbacksRef.current?.onSelectionCommit?.(event);
+        },
+        onWordFound(event) {
+          callbacksRef.current?.onWordFound?.(event);
+        },
+        onWordDuplicate(event) {
+          callbacksRef.current?.onWordDuplicate?.(event);
+        },
+        onWordsRevealed(event) {
+          callbacksRef.current?.onWordsRevealed?.(event);
+        },
+        onComplete(event) {
+          callbacksRef.current?.onComplete?.(event);
+        },
+        onMissSelection(path) {
+          callbacksRef.current?.onMissSelection?.(path);
+        },
+      };
+
       const options: PixiWordSearchOptions = {
         container: host,
         puzzle,
+        callbacks: wrappedCallbacks,
         ...(theme ? { theme } : {}),
         ...(responsive ? { responsive } : {}),
-        ...(callbacks ? { callbacks } : {}),
         ...(autoStart !== undefined ? { autoStart } : {}),
       };
 
@@ -73,7 +111,7 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
         }
 
         instanceRef.current = instance;
-        onInstanceReady?.(instance);
+        onInstanceReadyRef.current?.(instance);
       });
 
       return () => {
@@ -81,7 +119,19 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
         instanceRef.current?.destroy();
         instanceRef.current = null;
       };
-    }, [autoStart, callbacks, onInstanceReady, puzzle, responsive, theme]);
+    }, [autoStart, callbacksRef, onInstanceReadyRef, puzzle, responsive, theme]);
+
+    useEffect(() => {
+      const instance = instanceRef.current;
+
+      if (!instance) {
+        return;
+      }
+
+      if (instance.getPuzzle().id !== puzzle.id) {
+        instance.setPuzzle(puzzle);
+      }
+    }, [puzzle]);
 
     return <div ref={hostRef} className={className} style={style} />;
   },
