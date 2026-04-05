@@ -7,6 +7,8 @@ export type WordSearchColorTheme = {
   found: number;
   duplicate: number;
   accent: number;
+  reveal: number;
+  miss: number;
 };
 
 export type WordSearchCellTheme = {

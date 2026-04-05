@@ -107,16 +107,37 @@ export async function createPixiWordSearch(
   let layoutMetrics: LayoutMetrics | null = null;
   let unsubscribeGame: (() => void) | null = null;
   let pointerController: { destroy: () => void } | null = null;
+  let feedbackTimeoutId: number | null = null;
+
+  const clearFeedbackLater = (): void => {
+    if (feedbackTimeoutId !== null) {
+      window.clearTimeout(feedbackTimeoutId);
+    }
+
+    feedbackTimeoutId = window.setTimeout(() => {
+      boardRenderer.clearFeedback();
+      feedbackTimeoutId = null;
+    }, theme.reducedMotion ? 120 : 320);
+  };
 
   const syncVisualState = (): void => {
     if (!layoutMetrics) {
       return;
     }
 
-    const foundPaths = Object.values(game.getState().foundWords).map((item) => item.path);
+    const state = game.getState();
+    const foundPaths = Object.values(state.foundWords).map((item) => item.path);
+
+    if (state.revealedWords) {
+      const revealPaths = state.puzzle.placements.map((placement) => placement.path);
+      boardRenderer.renderReveal(revealPaths, layoutMetrics, theme);
+    } else {
+      boardRenderer.clearReveal();
+    }
+
     boardRenderer.renderFoundWords(foundPaths, layoutMetrics, theme);
 
-    const selectionPath = game.getState().selection?.path ?? [];
+    const selectionPath = state.selection?.path ?? [];
     boardRenderer.renderSelection(selectionPath, layoutMetrics, theme);
   };
 
@@ -157,6 +178,14 @@ export async function createPixiWordSearch(
     unsubscribeGame?.();
 
     unsubscribeGame = game.subscribe((event) => {
+      if (
+        layoutMetrics &&
+        event.type === 'word:duplicate'
+      ) {
+        boardRenderer.renderFeedback([event.path], layoutMetrics, theme, 'duplicate');
+        clearFeedbackLater();
+      }
+
       fanoutCallbacks(callbacks, event);
       syncVisualState();
     });
@@ -189,7 +218,9 @@ export async function createPixiWordSearch(
       onSelectionEnd() {
         const result = game.commitSelection();
 
-        if (result.kind === 'miss') {
+        if (result.kind === 'miss' && layoutMetrics) {
+          boardRenderer.renderFeedback([result.path], layoutMetrics, theme, 'miss');
+          clearFeedbackLater();
           callbacks?.onMissSelection?.(result.path);
         }
       },
@@ -236,6 +267,11 @@ export async function createPixiWordSearch(
       puzzle = nextPuzzle;
       game = createWordSearchGame(nextPuzzle);
 
+      boardRenderer.clearFeedback();
+      boardRenderer.clearReveal();
+      boardRenderer.clearFoundWords();
+      boardRenderer.clearSelection();
+
       bindGameEvents();
       bindPointerController();
       renderBoard();
@@ -245,6 +281,10 @@ export async function createPixiWordSearch(
     destroy() {
       unsubscribeGame?.();
       pointerController?.destroy();
+
+      if (feedbackTimeoutId !== null) {
+        window.clearTimeout(feedbackTimeoutId);
+      }
 
       if (responsive.autoResize) {
         window.removeEventListener('resize', handleResize);

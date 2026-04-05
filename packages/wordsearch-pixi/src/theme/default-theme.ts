@@ -10,6 +10,8 @@ export const defaultWordSearchTheme: WordSearchTheme = {
     found: 0x34d399,
     duplicate: 0xf59e0b,
     accent: 0x8b5cf6,
+    reveal: 0xa78bfa,
+    miss: 0xfb7185,
   },
   cell: {
     cornerRadius: 12,

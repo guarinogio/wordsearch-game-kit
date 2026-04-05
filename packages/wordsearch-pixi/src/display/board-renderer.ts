@@ -8,6 +8,7 @@ import type {
 } from '@gioguarino/wordsearch-types';
 
 import { FoundWordsRenderer } from './found-words-renderer';
+import { PathOverlayRenderer } from './path-overlay-renderer';
 import { SelectionRenderer } from './selection-renderer';
 
 export class BoardRenderer {
@@ -15,7 +16,9 @@ export class BoardRenderer {
 
   private readonly backgroundLayer: Graphics;
   private readonly gridLayer: Graphics;
+  private readonly revealLayer: PathOverlayRenderer;
   private readonly foundWordsLayer: FoundWordsRenderer;
+  private readonly feedbackLayer: PathOverlayRenderer;
   private readonly selectionLayer: SelectionRenderer;
   private readonly lettersLayer: Container;
 
@@ -23,13 +26,17 @@ export class BoardRenderer {
     this.root = new Container();
     this.backgroundLayer = new Graphics();
     this.gridLayer = new Graphics();
+    this.revealLayer = new PathOverlayRenderer();
     this.foundWordsLayer = new FoundWordsRenderer();
+    this.feedbackLayer = new PathOverlayRenderer();
     this.selectionLayer = new SelectionRenderer();
     this.lettersLayer = new Container();
 
     this.root.addChild(this.backgroundLayer);
     this.root.addChild(this.gridLayer);
+    this.root.addChild(this.revealLayer.root);
     this.root.addChild(this.foundWordsLayer.root);
+    this.root.addChild(this.feedbackLayer.root);
     this.root.addChild(this.selectionLayer.root);
     this.root.addChild(this.lettersLayer);
   }
@@ -40,11 +47,11 @@ export class BoardRenderer {
     this.lettersLayer.removeChildren();
 
     const { boardX, boardY, boardSizePx, cellSizePx } = metrics;
-    const gap = theme.cell.gap;
-    const cellFill = theme.colors.boardBackground;
-    const gridLine = theme.colors.gridLine;
-    const letterColor = theme.colors.letter;
-    const radius = theme.cell.cornerRadius;
+    const gap: number = theme.cell.gap;
+    const cellFill: number = theme.colors.boardBackground;
+    const gridLine: number = theme.colors.gridLine;
+    const letterColor: number = theme.colors.letter;
+    const radius: number = theme.cell.cornerRadius;
 
     this.backgroundLayer.roundRect(boardX, boardY, boardSizePx, boardSizePx, radius);
     this.backgroundLayer.fill(cellFill);
@@ -67,7 +74,7 @@ export class BoardRenderer {
           alpha: 1,
         });
 
-        const letter = puzzle.grid[row]?.[col] ?? '';
+        const letter: string = puzzle.grid[row]?.[col] ?? '';
 
         const text = new Text({
           text: letter,
@@ -90,6 +97,19 @@ export class BoardRenderer {
     }
   }
 
+  renderReveal(paths: Cell[][], metrics: LayoutMetrics, theme: WordSearchTheme): void {
+    this.revealLayer.render(paths, metrics, theme, {
+      color: theme.colors.reveal,
+      fillAlpha: 0.14,
+      strokeAlpha: 0.75,
+      lineWidth: Math.max(2, theme.cell.lineWidth + 0.5),
+    });
+  }
+
+  clearReveal(): void {
+    this.revealLayer.clear();
+  }
+
   renderSelection(path: Cell[], metrics: LayoutMetrics, theme: WordSearchTheme): void {
     this.selectionLayer.render(path, metrics, theme);
   }
@@ -104,6 +124,27 @@ export class BoardRenderer {
 
   clearFoundWords(): void {
     this.foundWordsLayer.clear();
+  }
+
+  renderFeedback(
+    paths: Cell[][],
+    metrics: LayoutMetrics,
+    theme: WordSearchTheme,
+    variant: 'miss' | 'duplicate',
+  ): void {
+    const color: number =
+      variant === 'duplicate' ? theme.colors.duplicate : theme.colors.miss;
+
+    this.feedbackLayer.render(paths, metrics, theme, {
+      color,
+      fillAlpha: 0.18,
+      strokeAlpha: 0.95,
+      lineWidth: Math.max(2.5, theme.cell.lineWidth + 1.5),
+    });
+  }
+
+  clearFeedback(): void {
+    this.feedbackLayer.clear();
   }
 
   destroy(): void {
