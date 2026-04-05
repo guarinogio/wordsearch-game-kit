@@ -35,8 +35,8 @@ select {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 20px;
+  grid-template-rows: auto auto 1fr;
+  gap: 18px;
   padding: 20px;
 }
 
@@ -92,8 +92,8 @@ h1 {
   border-color: rgba(148, 163, 184, 0.2);
 }
 
+.controls-card,
 .board-card {
-  min-height: 0;
   border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(10, 15, 28, 0.78);
   border-radius: 24px;
@@ -103,10 +103,78 @@ h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+.controls-card {
+  padding: 16px;
+}
+
+.controls-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.game-button {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8b5cf6, #60a5fa);
+  color: white;
+}
+
+.game-button.secondary {
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.game-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.words-panel {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.word-chip {
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.8);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  font-size: 0.92rem;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    opacity 140ms ease;
+}
+
+.word-chip.is-found {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.55);
+  color: #d1fae5;
+  text-decoration: line-through;
+}
+
+.word-chip.is-revealed {
+  opacity: 0.88;
+}
+
+.board-card {
+  min-height: 0;
+}
+
 .board-host {
   width: 100%;
-  min-height: min(78vh, 860px);
-  height: min(78vh, 860px);
+  min-height: min(72vh, 860px);
+  height: min(72vh, 860px);
   touch-action: none;
 }
 
@@ -131,12 +199,13 @@ h1 {
     align-items: flex-start;
   }
 
+  .controls-card,
   .board-card {
     border-radius: 18px;
   }
 
   .board-host {
-    min-height: 66vh;
-    height: 66vh;
+    min-height: 62vh;
+    height: 62vh;
   }
 }
