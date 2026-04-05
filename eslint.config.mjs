@@ -9,17 +9,22 @@ export default tseslint.config(
       '**/dist/**',
       '**/coverage/**',
       '**/node_modules/**',
+      '**/*.d.ts',
+      'eslint.config.mjs',
+      'prettier.config.mjs',
+      'vitest.config.ts',
+      'apps/**/eslint.config.js',
+      'apps/**/eslint.config.mjs',
       'apps/demo-web/src/vite-env.d.ts',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
-    files: ['**/*.{ts,tsx,mts,cts}'],
+    files: ['packages/**/*.{ts,tsx}', 'apps/**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
         project: [
-          './tsconfig.base.json',
           './packages/*/tsconfig.json',
           './apps/*/tsconfig.json',
         ],
