@@ -1,81 +1,49 @@
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import type { PixiWordSearchInstance } from '@gioguarino/wordsearch-pixi';
+import type {
+  GameCompletedEvent,
+  WordDuplicateEvent,
+  WordFoundEvent,
+} from '@gioguarino/wordsearch-types';
 
-import { createPixiWordSearch } from '@gioguarino/wordsearch-pixi';
+import { WordSearchBoard } from '@gioguarino/wordsearch-react';
 
 import { demoPuzzle } from './demo-puzzle';
 
 export default function App() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const instanceRef = useRef<PixiWordSearchInstance | null>(null);
   const [ready, setReady] = useState(false);
   const [foundCount, setFoundCount] = useState(0);
   const [score, setScore] = useState(0);
+  const [statusText, setStatusText] = useState('Drag across a word with mouse or touch.');
 
-  useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) {
-      return;
-    }
-
-    let disposed = false;
-
-    void createPixiWordSearch({
-      container,
-      puzzle: demoPuzzle,
-      responsive: {
-        autoResize: true,
-        mode: 'board-only',
-        minCellSize: 32,
-        maxCellSize: 72,
+  const callbacks = useMemo(
+    () => ({
+      onWordFound(event: WordFoundEvent) {
+        setFoundCount((count) => count + 1);
+        setScore(event.score);
+        setStatusText(`Found: ${event.wordId}`);
       },
-    }).then((instance) => {
-      if (disposed) {
-        instance.destroy();
-        return;
-      }
-
-      instanceRef.current = instance;
-      setReady(true);
-
-      const updateState = (): void => {
-        const gameState = instance.getGame().getState();
-        setFoundCount(gameState.foundWordIds.length);
-        setScore(gameState.score);
-      };
-
-      updateState();
-
-      const unsubscribe = instance.getGame().subscribe(() => {
-        updateState();
-      });
-
-      const originalDestroy = instance.destroy.bind(instance);
-
-      instance.destroy = () => {
-        unsubscribe();
-        originalDestroy();
-      };
-    });
-
-    return () => {
-      disposed = true;
-      instanceRef.current?.destroy();
-      instanceRef.current = null;
-    };
-  }, []);
+      onWordDuplicate(event: WordDuplicateEvent) {
+        setStatusText(`Already found: ${event.wordId}`);
+      },
+      onComplete(event: GameCompletedEvent) {
+        setScore(event.score);
+        setStatusText('Puzzle completed.');
+      },
+      onMissSelection() {
+        setStatusText('No match. Try another line.');
+      },
+    }),
+    [],
+  );
 
   return (
     <main className="app-shell">
       <section className="hero">
         <div>
-          <p className="eyebrow">Pixi renderer interactive</p>
+          <p className="eyebrow">React wrapper + Pixi runtime</p>
           <h1>wordsearch-game-kit</h1>
-          <p className="subtitle">
-            Drag across a word with mouse or touch. Found words stay marked on the board.
-          </p>
+          <p className="subtitle">{statusText}</p>
         </div>
 
         <div className="hud-stack">
@@ -87,7 +55,20 @@ export default function App() {
       </section>
 
       <section className="board-card">
-        <div ref={containerRef} className="board-host" />
+        <WordSearchBoard
+          puzzle={demoPuzzle}
+          className="board-host"
+          responsive={{
+            autoResize: true,
+            mode: 'board-only',
+            minCellSize: 32,
+            maxCellSize: 72,
+          }}
+          callbacks={callbacks}
+          onInstanceReady={() => {
+            setReady(true);
+          }}
+        />
       </section>
     </main>
   );

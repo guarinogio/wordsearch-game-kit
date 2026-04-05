@@ -23,6 +23,12 @@
     "@gioguarino/wordsearch-pixi": "workspace:*",
     "@gioguarino/wordsearch-types": "workspace:*"
   },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "lint": "eslint src --ext .ts,.tsx"

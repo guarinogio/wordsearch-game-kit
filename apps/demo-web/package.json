@@ -11,15 +11,16 @@
   "dependencies": {
     "@gioguarino/wordsearch-core": "workspace:*",
     "@gioguarino/wordsearch-pixi": "workspace:*",
+    "@gioguarino/wordsearch-react": "workspace:*",
     "@gioguarino/wordsearch-types": "workspace:*",
-    "pixi.js": "^8.17.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "pixi.js": "^8.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }

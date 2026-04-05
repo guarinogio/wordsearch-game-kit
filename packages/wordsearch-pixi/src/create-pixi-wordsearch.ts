@@ -4,6 +4,7 @@ import { createWordSearchGame } from '@gioguarino/wordsearch-core';
 
 import type {
   Cell,
+  GameEvent,
   LayoutMetrics,
   ResponsiveOptions,
   WordSearchPuzzle,
@@ -15,7 +16,11 @@ import { createPointerController } from './interaction/pointer-controller';
 import { getCellFromPoint } from './interaction/hit-testing';
 import { computeLayoutMetrics } from './layout/compute-layout';
 import { defaultWordSearchTheme } from './theme/default-theme';
-import type { PixiWordSearchInstance, PixiWordSearchOptions } from './types';
+import type {
+  PixiWordSearchCallbacks,
+  PixiWordSearchInstance,
+  PixiWordSearchOptions,
+} from './types';
 
 function mergeResponsiveOptions(
   responsive: ResponsiveOptions | undefined,
@@ -28,9 +33,7 @@ function mergeResponsiveOptions(
     allowZoom: responsive?.allowZoom ?? false,
     allowPan: responsive?.allowPan ?? false,
     hitSlop: responsive?.hitSlop ?? 10,
-    ...(responsive?.safeAreaInsets
-      ? { safeAreaInsets: responsive.safeAreaInsets }
-      : {}),
+    ...(responsive?.safeAreaInsets ? { safeAreaInsets: responsive.safeAreaInsets } : {}),
     ...(responsive?.responsiveBreakpoints
       ? { responsiveBreakpoints: responsive.responsiveBreakpoints }
       : {}),
@@ -56,12 +59,46 @@ function mergeTheme(theme: Partial<WordSearchTheme> | undefined): WordSearchThem
   };
 }
 
+function fanoutCallbacks(
+  callbacks: PixiWordSearchCallbacks | undefined,
+  event: GameEvent,
+): void {
+  callbacks?.onEvent?.(event);
+
+  switch (event.type) {
+    case 'selection:started':
+      callbacks?.onSelectionStart?.(event);
+      break;
+    case 'selection:updated':
+      callbacks?.onSelectionChange?.(event);
+      break;
+    case 'selection:committed':
+      callbacks?.onSelectionCommit?.(event);
+      break;
+    case 'word:found':
+      callbacks?.onWordFound?.(event);
+      break;
+    case 'word:duplicate':
+      callbacks?.onWordDuplicate?.(event);
+      break;
+    case 'words:revealed':
+      callbacks?.onWordsRevealed?.(event);
+      break;
+    case 'game:completed':
+      callbacks?.onComplete?.(event);
+      break;
+    default:
+      break;
+  }
+}
+
 export async function createPixiWordSearch(
   options: PixiWordSearchOptions,
 ): Promise<PixiWordSearchInstance> {
   let puzzle = options.puzzle;
   const theme = mergeTheme(options.theme);
   const responsive = mergeResponsiveOptions(options.responsive);
+  const callbacks = options.callbacks;
   let game = options.game ?? createWordSearchGame(puzzle);
 
   const app = new Application();
@@ -77,7 +114,6 @@ export async function createPixiWordSearch(
     }
 
     const foundPaths = Object.values(game.getState().foundWords).map((item) => item.path);
-
     boardRenderer.renderFoundWords(foundPaths, layoutMetrics, theme);
 
     const selectionPath = game.getState().selection?.path ?? [];
@@ -120,7 +156,8 @@ export async function createPixiWordSearch(
   const bindGameEvents = (): void => {
     unsubscribeGame?.();
 
-    unsubscribeGame = game.subscribe(() => {
+    unsubscribeGame = game.subscribe((event) => {
+      fanoutCallbacks(callbacks, event);
       syncVisualState();
     });
   };
@@ -150,7 +187,11 @@ export async function createPixiWordSearch(
         game.updateSelection(cell);
       },
       onSelectionEnd() {
-        game.commitSelection();
+        const result = game.commitSelection();
+
+        if (result.kind === 'miss') {
+          callbacks?.onMissSelection?.(result.path);
+        }
       },
       onSelectionCancel() {
         game.cancelSelection();
@@ -170,7 +211,7 @@ export async function createPixiWordSearch(
     game.start();
   }
 
-  return {
+  const instance: PixiWordSearchInstance = {
     getGame() {
       return game;
     },
@@ -215,4 +256,8 @@ export async function createPixiWordSearch(
       });
     },
   };
+
+  callbacks?.onReady?.(instance);
+
+  return instance;
 }

@@ -1,11 +1,33 @@
+import type { WordSearchGame } from '@gioguarino/wordsearch-core';
+
 import type {
+  Cell,
+  GameCompletedEvent,
+  GameEvent,
   LayoutMetrics,
   ResponsiveOptions,
+  SelectionCommittedEvent,
+  SelectionStartedEvent,
+  SelectionUpdatedEvent,
+  WordDuplicateEvent,
+  WordFoundEvent,
   WordSearchPuzzle,
   WordSearchTheme,
+  WordsRevealedEvent,
 } from '@gioguarino/wordsearch-types';
 
-import type { WordSearchGame } from '@gioguarino/wordsearch-core';
+export type PixiWordSearchCallbacks = {
+  onReady?: (instance: PixiWordSearchInstance) => void;
+  onEvent?: (event: GameEvent) => void;
+  onSelectionStart?: (event: SelectionStartedEvent) => void;
+  onSelectionChange?: (event: SelectionUpdatedEvent) => void;
+  onSelectionCommit?: (event: SelectionCommittedEvent) => void;
+  onWordFound?: (event: WordFoundEvent) => void;
+  onWordDuplicate?: (event: WordDuplicateEvent) => void;
+  onWordsRevealed?: (event: WordsRevealedEvent) => void;
+  onComplete?: (event: GameCompletedEvent) => void;
+  onMissSelection?: (path: Cell[]) => void;
+};
 
 export type PixiWordSearchOptions = {
   container: HTMLElement;
@@ -13,6 +35,7 @@ export type PixiWordSearchOptions = {
   game?: WordSearchGame;
   theme?: Partial<WordSearchTheme>;
   responsive?: ResponsiveOptions;
+  callbacks?: PixiWordSearchCallbacks;
   autoStart?: boolean;
 };
 

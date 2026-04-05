@@ -22,12 +22,24 @@ export function createPointerController(
 
   const toCellKey = (cell: Cell): string => `${cell.row}:${cell.col}`;
 
+  const reset = (): void => {
+    isPointerDown = false;
+    activePointerId = null;
+    lastCellKey = null;
+  };
+
   const handlePointerDown = (event: PointerEvent): void => {
+    if (isPointerDown) {
+      return;
+    }
+
     const cell = options.getCellFromClientPoint(event.clientX, event.clientY);
 
     if (!cell) {
       return;
     }
+
+    event.preventDefault();
 
     isPointerDown = true;
     activePointerId = event.pointerId;
@@ -58,49 +70,43 @@ export function createPointerController(
     options.onSelectionMove(cell);
   };
 
-  const endSelection = (pointerId: number | null): void => {
-    if (!isPointerDown) {
+  const handlePointerUp = (event: PointerEvent): void => {
+    if (!isPointerDown || activePointerId !== event.pointerId) {
       return;
     }
 
-    if (pointerId !== null && activePointerId !== pointerId) {
-      return;
+    if (options.element.hasPointerCapture(event.pointerId)) {
+      options.element.releasePointerCapture(event.pointerId);
     }
 
-    isPointerDown = false;
-    activePointerId = null;
-    lastCellKey = null;
+    reset();
     options.onSelectionEnd();
   };
 
-  const handlePointerUp = (event: PointerEvent): void => {
-    endSelection(event.pointerId);
-  };
-
   const handlePointerCancel = (event: PointerEvent): void => {
-    if (activePointerId !== event.pointerId) {
+    if (!isPointerDown || activePointerId !== event.pointerId) {
       return;
     }
 
-    isPointerDown = false;
-    activePointerId = null;
-    lastCellKey = null;
+    if (options.element.hasPointerCapture(event.pointerId)) {
+      options.element.releasePointerCapture(event.pointerId);
+    }
+
+    reset();
     options.onSelectionCancel?.();
   };
 
   options.element.addEventListener('pointerdown', handlePointerDown);
-  options.element.addEventListener('pointermove', handlePointerMove);
-  options.element.addEventListener('pointerup', handlePointerUp);
-  options.element.addEventListener('pointercancel', handlePointerCancel);
-  options.element.addEventListener('pointerleave', handlePointerCancel);
+  window.addEventListener('pointermove', handlePointerMove);
+  window.addEventListener('pointerup', handlePointerUp);
+  window.addEventListener('pointercancel', handlePointerCancel);
 
   return {
     destroy() {
       options.element.removeEventListener('pointerdown', handlePointerDown);
-      options.element.removeEventListener('pointermove', handlePointerMove);
-      options.element.removeEventListener('pointerup', handlePointerUp);
-      options.element.removeEventListener('pointercancel', handlePointerCancel);
-      options.element.removeEventListener('pointerleave', handlePointerCancel);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
     },
   };
 }
