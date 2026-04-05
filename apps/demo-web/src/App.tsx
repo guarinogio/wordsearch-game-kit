@@ -1,23 +1,68 @@
+import { useEffect, useRef, useState } from 'react';
+
+import type { PixiWordSearchInstance } from '@gioguarino/wordsearch-pixi';
+
+import { createPixiWordSearch } from '@gioguarino/wordsearch-pixi';
+
+import { demoPuzzle } from './demo-puzzle';
+
 export default function App() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const instanceRef = useRef<PixiWordSearchInstance | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    let disposed = false;
+
+    void createPixiWordSearch({
+      container,
+      puzzle: demoPuzzle,
+      responsive: {
+        autoResize: true,
+        mode: 'board-only',
+        minCellSize: 32,
+        maxCellSize: 72,
+      },
+    }).then((instance) => {
+      if (disposed) {
+        instance.destroy();
+        return;
+      }
+
+      instanceRef.current = instance;
+      setReady(true);
+    });
+
+    return () => {
+      disposed = true;
+      instanceRef.current?.destroy();
+      instanceRef.current = null;
+    };
+  }, []);
+
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '2rem',
-        background: '#0b1020',
-        color: '#f8fafc',
-        fontFamily:
-          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      }}
-    >
-      <div style={{ maxWidth: 720, textAlign: 'center' }}>
-        <h1 style={{ marginBottom: 12, fontSize: '2rem' }}>wordsearch-game-kit</h1>
-        <p style={{ opacity: 0.85 }}>
-          Bootstrap listo. La siguiente fase implementa los contratos públicos y la API inicial.
-        </p>
-      </div>
+    <main className="app-shell">
+      <section className="hero">
+        <div>
+          <p className="eyebrow">Pixi renderer base</p>
+          <h1>wordsearch-game-kit</h1>
+          <p className="subtitle">
+            Responsive board renderer ready for desktop, Android and iOS.
+          </p>
+        </div>
+
+        <div className="status-pill">{ready ? 'Renderer ready' : 'Booting Pixi...'}</div>
+      </section>
+
+      <section className="board-card">
+        <div ref={containerRef} className="board-host" />
+      </section>
     </main>
   );
 }
