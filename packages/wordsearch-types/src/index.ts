@@ -1,58 +1,47 @@
 export type {
   Cell,
   Direction,
-  WordSearchPlacement,
+  Placement,
   WordSearchPuzzle,
   WordSearchWord,
 } from './puzzle';
 
 export type {
-  ActiveSelection,
-  FoundWordState,
+  GameSelection,
   GameState,
   GameStatus,
-  SelectionResult,
 } from './game';
 
 export type {
-  GameCompletedEvent,
-  GameEvent,
-  GameEventListener,
-  GameRestartedEvent,
-  GameStartedEvent,
-  ScoreChangedEvent,
-  SelectionCancelledEvent,
-  SelectionCommittedEvent,
-  SelectionStartedEvent,
-  SelectionUpdatedEvent,
-  WordDuplicateEvent,
-  WordFoundEvent,
-  WordsRevealedEvent,
-} from './events';
+  SerializableGameSnapshot,
+} from './snapshot';
 
 export type {
-  CreateWordSearchGameOptions,
-  DuplicateSelectionBehavior,
-  ResolvedWordSearchRules,
-  ResolvedWordSearchScoringConfig,
-  WordSearchRules,
-  WordSearchScoringConfig,
-} from './config';
+  WordSearchTheme,
+  WordSearchThemeColors,
+  WordSearchThemeCell,
+  WordSearchThemeAnimation,
+} from './theme';
 
 export type {
-  Insets,
   LayoutMetrics,
-  LayoutMode,
-  ResponsiveBreakpoints,
   ResponsiveMode,
+  Insets,
+  ResponsiveBreakpoint,
   ResponsiveOptions,
 } from './layout';
 
 export type {
-  WordSearchAnimationTheme,
-  WordSearchCellTheme,
-  WordSearchColorTheme,
-  WordSearchTheme,
-} from './theme';
+  GameEvent,
+  SelectionStartedEvent,
+  SelectionUpdatedEvent,
+  SelectionCommittedEvent,
+  WordFoundEvent,
+  WordDuplicateEvent,
+  WordsRevealedEvent,
+  GameCompletedEvent,
+} from './events';
 
-export type { SerializableGameSnapshot } from './snapshot';
+export type {
+  WordSearchGameConfig,
+} from './config';
