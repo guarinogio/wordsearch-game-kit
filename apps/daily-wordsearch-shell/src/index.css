@@ -1,0 +1,277 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  background: #09111f;
+  color: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.14), transparent 28%),
+    radial-gradient(circle at right, rgba(139, 92, 246, 0.12), transparent 30%),
+    linear-gradient(180deg, #09111f 0%, #0b1020 100%);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.shell-page {
+  min-height: 100vh;
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.shell-header {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #a78bfa;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 0.95;
+}
+
+.subtext {
+  margin: 10px 0 0;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.status-card {
+  min-width: 280px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(10, 15, 28, 0.78);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.status-title {
+  color: #93c5fd;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-value {
+  margin-top: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.status-meta {
+  margin-top: 8px;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.shell-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.sidebar-card,
+.board-card {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(10, 15, 28, 0.78);
+  border-radius: 24px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-card {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.sidebar-title {
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  color: #93c5fd;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.puzzle-list {
+  display: grid;
+  gap: 10px;
+}
+
+.puzzle-item {
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(30, 41, 59, 0.72);
+  color: #f8fafc;
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+}
+
+.puzzle-item.is-active {
+  border-color: rgba(96, 165, 250, 0.58);
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.puzzle-item-number {
+  font-weight: 700;
+}
+
+.puzzle-item-meta {
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.74);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.info-pill {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  display: grid;
+  gap: 4px;
+}
+
+.info-pill span {
+  font-size: 0.84rem;
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.info-pill strong {
+  font-size: 1rem;
+}
+
+.board-panel {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.board-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.board-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.board-subtitle {
+  margin-top: 4px;
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.board-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8b5cf6, #60a5fa);
+  color: white;
+}
+
+.action-button.secondary {
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.board-card {
+  overflow: hidden;
+}
+
+.board-host {
+  width: 100%;
+  min-height: min(78vh, 920px);
+  height: min(78vh, 920px);
+  touch-action: none;
+}
+
+.board-host canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 980px) {
+  .shell-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell-page {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .sidebar-card,
+  .board-card,
+  .status-card {
+    border-radius: 18px;
+  }
+
+  .board-host {
+    min-height: 62vh;
+    height: 62vh;
+  }
+}
