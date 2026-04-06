@@ -1,52 +1,11 @@
-# wordsearch-game-kit
+# WordSearch Game Kit — Phase 15 Docs
 
-Monorepo for a responsive word-search game toolkit.
+This bundle contains documentation and examples for integrating the wordsearch toolkit.
 
-## Packages
+## Contents
 
-- `@gioguarino/wordsearch-types`
-- `@gioguarino/wordsearch-core`
-- `@gioguarino/wordsearch-pixi`
-- `@gioguarino/wordsearch-react`
+- 15.1 Root README
+- 15.2 Examples
+- 15.3 Integration Guide
 
-## Apps
-
-- `apps/demo-web`
-
-## Scripts
-
-```bash
-pnpm dev
-pnpm build
-pnpm test
-pnpm lint
-pnpm format
-
----
-
-## 3) Archivos de los packages
-
-### `packages/wordsearch-types/package.json`
-
-```json
-{
-  "name": "@gioguarino/wordsearch-types",
-  "version": "0.0.0",
-  "private": false,
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "files": ["dist"],
-  "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "lint": "eslint src --ext .ts"
-  }
-}
+These docs are intended to be copied into your repo.

@@ -1,8 +1,27 @@
 {
   "name": "@gioguarino/wordsearch-core",
-  "version": "0.0.0",
-  "private": false,
+  "version": "0.1.0",
+  "description": "Headless runtime for a single wordsearch puzzle.",
+  "license": "MIT",
+  "author": "Gio Guarino",
+  "homepage": "https://github.com/guarinogio/wordsearch-game-kit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/guarinogio/wordsearch-game-kit.git",
+    "directory": "packages/wordsearch-core"
+  },
+  "bugs": {
+    "url": "https://github.com/guarinogio/wordsearch-game-kit/issues"
+  },
+  "keywords": [
+    "wordsearch",
+    "word-search",
+    "game",
+    "headless",
+    "typescript"
+  ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,12 +32,18 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "dependencies": {
     "@gioguarino/wordsearch-types": "workspace:*"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts,.tsx"
   }
 }
