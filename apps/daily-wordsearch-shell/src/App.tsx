@@ -14,7 +14,7 @@ import { useDailySessionStore } from './state/use-daily-session-store';
 
 export default function App() {
   const [instance, setInstance] = useState<PixiWordSearchInstance | null>(null);
-  const [statusText, setStatusText] = useState('Choose a puzzle and start playing.');
+  const [statusText, setStatusText] = useState('Select a puzzle and interact with the board.');
 
   const {
     state: shellState,
@@ -72,7 +72,7 @@ export default function App() {
   );
 
   useEffect(() => {
-    setStatusText(`Opened puzzle ${activePuzzleIndex + 1}.`);
+    setStatusText(`Opened example puzzle ${activePuzzleIndex + 1}.`);
     setInstance(null);
   }, [activePuzzleIndex]);
 
@@ -116,17 +116,17 @@ export default function App() {
     <main className="shell-page">
       <header className="shell-header">
         <div>
-          <p className="eyebrow">Daily shell with external puzzle session state</p>
-          <h1>{dailySession.topic}</h1>
+          <p className="eyebrow">Integration example</p>
+          <h1>daily-wordsearch-shell</h1>
           <p className="subtext">
-            Date {dailySession.date} · {dailySession.puzzles.length} puzzles
+            External consumer app for validating multi-puzzle usage of the package.
           </p>
         </div>
 
         <div className="status-card">
-          <div className="status-title">Current puzzle</div>
+          <div className="status-title">Example session</div>
           <div className="status-value">
-            #{activePuzzleIndex + 1} · {activePuzzle.topic}
+            {dailySession.topic} · {dailySession.date}
           </div>
           <div className="status-meta">{statusText}</div>
         </div>
@@ -135,7 +135,7 @@ export default function App() {
       <section className="shell-layout">
         <aside className="sidebar-card">
           <div className="sidebar-section">
-            <div className="sidebar-title">Puzzles</div>
+            <div className="sidebar-title">Example puzzles</div>
 
             <div className="puzzle-list">
               {dailySession.puzzles.map((puzzle, index) => {
@@ -169,7 +169,7 @@ export default function App() {
           </div>
 
           <div className="sidebar-section">
-            <div className="sidebar-title">Puzzle info</div>
+            <div className="sidebar-title">Snapshot-backed state</div>
 
             <div className="info-grid">
               <div className="info-pill">
@@ -195,7 +195,7 @@ export default function App() {
           </div>
 
           <div className="sidebar-section">
-            <div className="sidebar-title">Session state</div>
+            <div className="sidebar-title">Example controls</div>
 
             <div className="session-actions">
               <button
@@ -206,10 +206,10 @@ export default function App() {
                   instance?.getGame().restart();
                   instance?.getGame().start();
                   instance?.resetView();
-                  setStatusText('Shell session progress cleared.');
+                  setStatusText('Example session progress cleared.');
                 }}
               >
-                Clear shell session progress
+                Clear example session
               </button>
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function App() {
             <div>
               <div className="board-title">Puzzle {activePuzzleIndex + 1}</div>
               <div className="board-subtitle">
-                External session state is now owned by the shell
+                Minimal host app consuming the reusable package
               </div>
             </div>
 
