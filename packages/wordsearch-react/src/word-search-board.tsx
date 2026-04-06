@@ -3,14 +3,20 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from 'react';
 
 import { createPixiWordSearch } from '@gioguarino/wordsearch-pixi';
 
-import type { PixiWordSearchCallbacks, PixiWordSearchInstance, PixiWordSearchOptions } from '@gioguarino/wordsearch-pixi';
+import type {
+  PixiWordSearchCallbacks,
+  PixiWordSearchInstance,
+  PixiWordSearchOptions,
+} from '@gioguarino/wordsearch-pixi';
 import type { WordSearchBoardHandle, WordSearchBoardProps } from './types';
 
 import { useLatestRef } from './hooks/use-latest-ref';
+import { usePersistentWordSearch } from './hooks/use-persistent-word-search';
 
 export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoardProps>(
   function WordSearchBoard(
@@ -19,6 +25,7 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
       theme,
       responsive,
       callbacks,
+      persistence,
       autoStart,
       className,
       style,
@@ -28,9 +35,20 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const instanceRef = useRef<PixiWordSearchInstance | null>(null);
+    const [instanceState, setInstanceState] = useState<PixiWordSearchInstance | null>(null);
 
     const callbacksRef = useLatestRef<PixiWordSearchCallbacks | undefined>(callbacks);
     const onInstanceReadyRef = useLatestRef(onInstanceReady);
+
+    const persistenceArgs = {
+      instance: instanceState,
+      puzzle,
+      enabled: persistence?.enabled ?? false,
+      ...(persistence?.namespace ? { namespace: persistence.namespace } : {}),
+      ...(persistence?.storageKey ? { storageKey: persistence.storageKey } : {}),
+    } as const;
+
+    usePersistentWordSearch(persistenceArgs);
 
     useImperativeHandle(
       ref,
@@ -48,6 +66,9 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
         },
         resize: () => {
           instanceRef.current?.resize();
+        },
+        resetView: () => {
+          instanceRef.current?.resetView();
         },
       }),
       [autoStart],
@@ -111,6 +132,7 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
         }
 
         instanceRef.current = instance;
+        setInstanceState(instance);
         onInstanceReadyRef.current?.(instance);
       });
 
@@ -118,6 +140,7 @@ export const WordSearchBoard = forwardRef<WordSearchBoardHandle, WordSearchBoard
         disposed = true;
         instanceRef.current?.destroy();
         instanceRef.current = null;
+        setInstanceState(null);
       };
     }, [autoStart, callbacksRef, onInstanceReadyRef, puzzle, responsive, theme]);
 

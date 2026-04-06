@@ -12,6 +12,8 @@ import { WordSearchBoard } from '@gioguarino/wordsearch-react';
 
 import { demoPuzzle } from './demo-puzzle';
 
+const STORAGE_KEY = `demo:${demoPuzzle.id}`;
+
 export default function App() {
   const [instance, setInstance] = useState<PixiWordSearchInstance | null>(null);
   const [ready, setReady] = useState(false);
@@ -26,6 +28,8 @@ export default function App() {
       mode: 'board-only',
       minCellSize: 32,
       maxCellSize: 72,
+      allowZoom: true,
+      allowPan: true,
     }),
     [],
   );
@@ -58,6 +62,11 @@ export default function App() {
   const handleInstanceReady = useCallback((nextInstance: PixiWordSearchInstance) => {
     setInstance(nextInstance);
     setReady(true);
+
+    const state = nextInstance.getGame().getState();
+    setFoundCount(state.foundWordIds.length);
+    setScore(state.score);
+    setRevealed(state.revealedWords);
   }, []);
 
   const gameState = instance?.getGame().getState() ?? null;
@@ -65,6 +74,7 @@ export default function App() {
   const handleRestart = (): void => {
     instance?.getGame().restart();
     instance?.getGame().start();
+    instance?.resetView();
     setFoundCount(0);
     setScore(0);
     setRevealed(false);
@@ -75,11 +85,27 @@ export default function App() {
     instance?.getGame().revealWords();
   };
 
+  const handleResetView = (): void => {
+    instance?.resetView();
+    setStatusText('View reset.');
+  };
+
+  const handleClearSavedProgress = (): void => {
+    window.localStorage.removeItem(STORAGE_KEY);
+    instance?.getGame().restart();
+    instance?.getGame().start();
+    instance?.resetView();
+    setFoundCount(0);
+    setScore(0);
+    setRevealed(false);
+    setStatusText('Saved progress cleared.');
+  };
+
   return (
     <main className="app-shell">
       <section className="hero">
         <div>
-          <p className="eyebrow">React wrapper + controls</p>
+          <p className="eyebrow">Persistence + multi-instance-safe storage</p>
           <h1>wordsearch-game-kit</h1>
           <p className="subtitle">{statusText}</p>
         </div>
@@ -106,6 +132,22 @@ export default function App() {
           >
             {revealed ? 'Words revealed' : 'Reveal words'}
           </button>
+
+          <button
+            className="game-button secondary"
+            onClick={handleResetView}
+            type="button"
+          >
+            Reset view
+          </button>
+
+          <button
+            className="game-button secondary"
+            onClick={handleClearSavedProgress}
+            type="button"
+          >
+            Clear saved progress
+          </button>
         </div>
 
         <div className="words-panel">
@@ -130,6 +172,10 @@ export default function App() {
           className="board-host"
           responsive={responsive}
           callbacks={callbacks}
+          persistence={{
+            enabled: true,
+            storageKey: STORAGE_KEY,
+          }}
           onInstanceReady={handleInstanceReady}
         />
       </section>

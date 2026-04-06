@@ -14,6 +14,7 @@ import type {
 import { BoardRenderer } from './display/board-renderer';
 import { createPointerController } from './interaction/pointer-controller';
 import { getCellFromPoint } from './interaction/hit-testing';
+import { createViewportController } from './interaction/viewport-controller';
 import { computeLayoutMetrics } from './layout/compute-layout';
 import { defaultWordSearchTheme } from './theme/default-theme';
 import type {
@@ -21,6 +22,7 @@ import type {
   PixiWordSearchInstance,
   PixiWordSearchOptions,
 } from './types';
+import { clampTransform } from './viewport/clamp-transform';
 
 function mergeResponsiveOptions(
   responsive: ResponsiveOptions | undefined,
@@ -107,7 +109,39 @@ export async function createPixiWordSearch(
   let layoutMetrics: LayoutMetrics | null = null;
   let unsubscribeGame: (() => void) | null = null;
   let pointerController: { destroy: () => void } | null = null;
+  let viewportController: { destroy: () => void; reset: () => void } | null = null;
   let feedbackTimeoutId: number | null = null;
+  let isViewportGesturing = false;
+
+  let transform = {
+    x: 0,
+    y: 0,
+    scale: 1,
+  };
+
+  const applyTransform = (): void => {
+    if (!layoutMetrics) {
+      boardRenderer.root.position.set(transform.x, transform.y);
+      boardRenderer.root.scale.set(transform.scale);
+      return;
+    }
+
+    const clamped = clampTransform({
+      containerWidth: options.container.clientWidth,
+      containerHeight: options.container.clientHeight,
+      contentX: layoutMetrics.boardX,
+      contentY: layoutMetrics.boardY,
+      contentWidth: layoutMetrics.boardSizePx,
+      contentHeight: layoutMetrics.boardSizePx,
+      x: transform.x,
+      y: transform.y,
+      scale: transform.scale,
+    });
+
+    transform = clamped;
+    boardRenderer.root.position.set(clamped.x, clamped.y);
+    boardRenderer.root.scale.set(clamped.scale);
+  };
 
   const clearFeedbackLater = (): void => {
     if (feedbackTimeoutId !== null) {
@@ -164,6 +198,7 @@ export async function createPixiWordSearch(
     layoutMetrics = computeLayoutMetrics(width, height, puzzle, responsive);
     boardRenderer.renderBase(puzzle, theme, layoutMetrics);
     syncVisualState();
+    applyTransform();
   };
 
   const resize = (): void => {
@@ -178,16 +213,14 @@ export async function createPixiWordSearch(
     unsubscribeGame?.();
 
     unsubscribeGame = game.subscribe((event) => {
-      if (
-        layoutMetrics &&
-        event.type === 'word:duplicate'
-      ) {
+      if (layoutMetrics && event.type === 'word:duplicate') {
         boardRenderer.renderFeedback([event.path], layoutMetrics, theme, 'duplicate');
         clearFeedbackLater();
       }
 
       fanoutCallbacks(callbacks, event);
       syncVisualState();
+      applyTransform();
     });
   };
 
@@ -197,10 +230,13 @@ export async function createPixiWordSearch(
     }
 
     const rect = app.canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    const screenX = clientX - rect.left;
+    const screenY = clientY - rect.top;
 
-    return getCellFromPoint(x, y, layoutMetrics, puzzle.size);
+    const worldX = (screenX - transform.x) / transform.scale;
+    const worldY = (screenY - transform.y) / transform.scale;
+
+    return getCellFromPoint(worldX, worldY, layoutMetrics, puzzle.size);
   };
 
   const bindPointerController = (): void => {
@@ -210,12 +246,24 @@ export async function createPixiWordSearch(
       element: app.canvas,
       getCellFromClientPoint,
       onSelectionStart(cell) {
+        if (isViewportGesturing) {
+          return;
+        }
+
         game.beginSelection(cell);
       },
       onSelectionMove(cell) {
+        if (isViewportGesturing) {
+          return;
+        }
+
         game.updateSelection(cell);
       },
       onSelectionEnd() {
+        if (isViewportGesturing) {
+          return;
+        }
+
         const result = game.commitSelection();
 
         if (result.kind === 'miss' && layoutMetrics) {
@@ -230,12 +278,36 @@ export async function createPixiWordSearch(
     });
   };
 
+  const bindViewportController = (): void => {
+    viewportController?.destroy();
+
+    viewportController = createViewportController({
+      element: app.canvas,
+      enabled: responsive.allowZoom ?? false,
+      minScale: 1,
+      maxScale: 2.75,
+      getTransform: () => transform,
+      setTransform(next) {
+        transform = next;
+        applyTransform();
+      },
+      onGestureStateChange(isGesturing) {
+        isViewportGesturing = isGesturing;
+
+        if (isGesturing) {
+          game.cancelSelection();
+        }
+      },
+    });
+  };
+
   if (responsive.autoResize) {
     window.addEventListener('resize', handleResize);
   }
 
   bindGameEvents();
   bindPointerController();
+  bindViewportController();
   renderBoard();
 
   if (options.autoStart ?? true) {
@@ -263,9 +335,16 @@ export async function createPixiWordSearch(
       resize();
     },
 
+    resetView() {
+      transform = { x: 0, y: 0, scale: 1 };
+      applyTransform();
+      viewportController?.reset();
+    },
+
     setPuzzle(nextPuzzle: WordSearchPuzzle) {
       puzzle = nextPuzzle;
       game = createWordSearchGame(nextPuzzle);
+      transform = { x: 0, y: 0, scale: 1 };
 
       boardRenderer.clearFeedback();
       boardRenderer.clearReveal();
@@ -274,6 +353,7 @@ export async function createPixiWordSearch(
 
       bindGameEvents();
       bindPointerController();
+      bindViewportController();
       renderBoard();
       game.start();
     },
@@ -281,6 +361,7 @@ export async function createPixiWordSearch(
     destroy() {
       unsubscribeGame?.();
       pointerController?.destroy();
+      viewportController?.destroy();
 
       if (feedbackTimeoutId !== null) {
         window.clearTimeout(feedbackTimeoutId);

@@ -1,7 +1,21 @@
 import type { CSSProperties } from 'react';
 
-import type { GameState, ResponsiveOptions, WordSearchPuzzle, WordSearchTheme } from '@gioguarino/wordsearch-types';
-import type { PixiWordSearchCallbacks, PixiWordSearchInstance } from '@gioguarino/wordsearch-pixi';
+import type {
+  GameState,
+  ResponsiveOptions,
+  WordSearchPuzzle,
+  WordSearchTheme,
+} from '@gioguarino/wordsearch-types';
+import type {
+  PixiWordSearchCallbacks,
+  PixiWordSearchInstance,
+} from '@gioguarino/wordsearch-pixi';
+
+export type WordSearchPersistenceOptions = {
+  enabled?: boolean;
+  namespace?: string;
+  storageKey?: string;
+};
 
 export type WordSearchBoardHandle = {
   getInstance: () => PixiWordSearchInstance | null;
@@ -9,6 +23,7 @@ export type WordSearchBoardHandle = {
   restart: () => void;
   revealWords: () => void;
   resize: () => void;
+  resetView: () => void;
 };
 
 export type WordSearchBoardProps = {
@@ -16,6 +31,7 @@ export type WordSearchBoardProps = {
   theme?: Partial<WordSearchTheme>;
   responsive?: ResponsiveOptions;
   callbacks?: PixiWordSearchCallbacks;
+  persistence?: WordSearchPersistenceOptions;
   autoStart?: boolean;
   className?: string;
   style?: CSSProperties;

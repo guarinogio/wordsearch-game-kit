@@ -45,6 +45,7 @@ export type PixiWordSearchInstance = {
   getTheme(): WordSearchTheme;
   getLayoutMetrics(): LayoutMetrics | null;
   resize(): void;
+  resetView(): void;
   setPuzzle(puzzle: WordSearchPuzzle): void;
   destroy(): void;
 };
