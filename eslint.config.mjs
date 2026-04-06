@@ -1,32 +1,37 @@
 import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import prettier from 'eslint-config-prettier';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
-export default tseslint.config(
+export default [
   {
     ignores: [
       '**/dist/**',
-      '**/coverage/**',
       '**/node_modules/**',
+      '**/.turbo/**',
+      '**/coverage/**',
       '**/*.d.ts',
       'eslint.config.mjs',
-      'prettier.config.mjs',
       'vitest.config.ts',
-      'apps/**/eslint.config.js',
-      'apps/**/eslint.config.mjs',
-      'apps/demo-web/src/vite-env.d.ts',
+      'apps/*/vite.config.ts',
     ],
   },
+
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+
+  ...tseslint.configs.recommendedTypeChecked.map((config) => ({
+    ...config,
+    files: ['**/*.{ts,tsx,mts,cts}'],
+  })),
+
   {
-    files: ['packages/**/*.{ts,tsx}', 'apps/**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx,mts,cts}'],
     languageOptions: {
       parserOptions: {
         project: [
           './packages/*/tsconfig.json',
-          './apps/*/tsconfig.json',
+          './apps/demo-web/tsconfig.app.json',
+          './apps/daily-wordsearch-shell/tsconfig.app.json',
         ],
         tsconfigRootDir: import.meta.dirname,
       },
@@ -40,11 +45,18 @@ export default tseslint.config(
         'error',
         { prefer: 'type-imports' },
       ],
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
     },
   },
-  prettier,
-);
+
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+    },
+  },
+
+  eslintConfigPrettier,
+];

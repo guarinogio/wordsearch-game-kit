@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type {
-  GameCompletedEvent,
+  ResponsiveOptions,
   WordDuplicateEvent,
   WordFoundEvent,
 } from '@gioguarino/wordsearch-types';
@@ -10,13 +10,45 @@ import type { PixiWordSearchInstance } from '@gioguarino/wordsearch-pixi';
 import { WordSearchBoard } from '@gioguarino/wordsearch-react';
 
 import { dailySession } from './daily-session';
+import { useDailySessionStore } from './state/use-daily-session-store';
 
 export default function App() {
-  const [activePuzzleIndex, setActivePuzzleIndex] = useState(0);
   const [instance, setInstance] = useState<PixiWordSearchInstance | null>(null);
   const [statusText, setStatusText] = useState('Choose a puzzle and start playing.');
 
-  const activePuzzle = dailySession.puzzles[activePuzzleIndex]!;
+  const {
+    state: shellState,
+    activePuzzleProgress,
+    setActivePuzzleId,
+    syncPuzzleFromGameState,
+    clearSessionProgress,
+  } = useDailySessionStore({
+    sessionId: dailySession.id,
+    date: dailySession.date,
+    topic: dailySession.topic,
+    puzzles: dailySession.puzzles,
+  });
+
+  const activePuzzleIndex = dailySession.puzzles.findIndex(
+    (puzzle) => String(puzzle.id) === shellState.activePuzzleId,
+  );
+
+  const activePuzzle =
+    dailySession.puzzles[activePuzzleIndex >= 0 ? activePuzzleIndex : 0]!;
+
+  const activePuzzleId = String(activePuzzle.id);
+
+  const responsive = useMemo<ResponsiveOptions>(
+    () => ({
+      autoResize: true,
+      mode: 'board-only',
+      minCellSize: 32,
+      maxCellSize: 72,
+      allowZoom: true,
+      allowPan: true,
+    }),
+    [],
+  );
 
   const callbacks = useMemo(
     () => ({
@@ -26,7 +58,7 @@ export default function App() {
       onWordDuplicate(event: WordDuplicateEvent) {
         setStatusText(`Already found: ${event.wordId}`);
       },
-      onComplete(_event: GameCompletedEvent) {
+      onComplete() {
         setStatusText('Puzzle completed.');
       },
       onWordsRevealed() {
@@ -39,13 +71,52 @@ export default function App() {
     [],
   );
 
-  const gameState = instance?.getGame().getState() ?? null;
+  useEffect(() => {
+    setStatusText(`Opened puzzle ${activePuzzleIndex + 1}.`);
+    setInstance(null);
+  }, [activePuzzleIndex]);
+
+  const handleInstanceReady = useCallback(
+    (nextInstance: PixiWordSearchInstance) => {
+      const game = nextInstance.getGame();
+      const snapshot = activePuzzleProgress.snapshot;
+
+      if (snapshot && snapshot.puzzleId === activePuzzle.id) {
+        game.hydrate(snapshot);
+      }
+
+      nextInstance.resetView();
+      nextInstance.resize();
+
+      syncPuzzleFromGameState(activePuzzleId, game.getState(), game.getSnapshot());
+      setInstance(nextInstance);
+    },
+    [activePuzzle.id, activePuzzleId, activePuzzleProgress.snapshot, syncPuzzleFromGameState],
+  );
+
+  useEffect(() => {
+    if (!instance) {
+      return;
+    }
+
+    if (String(instance.getPuzzle().id) !== activePuzzleId) {
+      return;
+    }
+
+    const game = instance.getGame();
+
+    const unsubscribe = game.subscribe(() => {
+      syncPuzzleFromGameState(activePuzzleId, game.getState(), game.getSnapshot());
+    });
+
+    return unsubscribe;
+  }, [activePuzzleId, instance, syncPuzzleFromGameState]);
 
   return (
     <main className="shell-page">
       <header className="shell-header">
         <div>
-          <p className="eyebrow">Daily shell base</p>
+          <p className="eyebrow">Daily shell with external puzzle session state</p>
           <h1>{dailySession.topic}</h1>
           <p className="subtext">
             Date {dailySession.date} · {dailySession.puzzles.length} puzzles
@@ -68,21 +139,28 @@ export default function App() {
 
             <div className="puzzle-list">
               {dailySession.puzzles.map((puzzle, index) => {
-                const isActive = index === activePuzzleIndex;
+                const puzzleId = String(puzzle.id);
+                const isActive = puzzleId === shellState.activePuzzleId;
+                const progress = shellState.puzzles[puzzleId];
+                const isCompleted = progress?.completed ?? false;
+                const foundCount = progress?.foundCount ?? 0;
 
                 return (
                   <button
-                    key={String(puzzle.id)}
+                    key={puzzleId}
                     type="button"
                     className={`puzzle-item ${isActive ? 'is-active' : ''}`}
                     onClick={() => {
-                      setActivePuzzleIndex(index);
-                      setStatusText(`Opened puzzle ${index + 1}.`);
+                      setActivePuzzleId(puzzleId);
                     }}
                   >
-                    <span className="puzzle-item-number">Puzzle {index + 1}</span>
+                    <span className="puzzle-item-number">
+                      Puzzle {index + 1}
+                      {isCompleted ? ' · done' : ''}
+                    </span>
+
                     <span className="puzzle-item-meta">
-                      {puzzle.words.length} words · {puzzle.size}×{puzzle.size}
+                      {foundCount}/{puzzle.words.length} found · {puzzle.size}×{puzzle.size}
                     </span>
                   </button>
                 );
@@ -101,18 +179,38 @@ export default function App() {
 
               <div className="info-pill">
                 <span>Found</span>
-                <strong>{gameState?.foundWordIds.length ?? 0}</strong>
+                <strong>{activePuzzleProgress.foundCount}</strong>
               </div>
 
               <div className="info-pill">
                 <span>Status</span>
-                <strong>{gameState?.status ?? 'idle'}</strong>
+                <strong>{activePuzzleProgress.completed ? 'completed' : 'playing'}</strong>
               </div>
 
               <div className="info-pill">
                 <span>Revealed</span>
-                <strong>{gameState?.revealedWords ? 'yes' : 'no'}</strong>
+                <strong>{activePuzzleProgress.revealedWords ? 'yes' : 'no'}</strong>
               </div>
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <div className="sidebar-title">Session state</div>
+
+            <div className="session-actions">
+              <button
+                type="button"
+                className="action-button secondary full-width"
+                onClick={() => {
+                  clearSessionProgress();
+                  instance?.getGame().restart();
+                  instance?.getGame().start();
+                  instance?.resetView();
+                  setStatusText('Shell session progress cleared.');
+                }}
+              >
+                Clear shell session progress
+              </button>
             </div>
           </div>
         </aside>
@@ -122,7 +220,7 @@ export default function App() {
             <div>
               <div className="board-title">Puzzle {activePuzzleIndex + 1}</div>
               <div className="board-subtitle">
-                Multi-puzzle shell using the reusable package
+                External session state is now owned by the shell
               </div>
             </div>
 
@@ -149,25 +247,28 @@ export default function App() {
               >
                 Reveal
               </button>
+
+              <button
+                type="button"
+                className="action-button secondary"
+                onClick={() => {
+                  instance?.resetView();
+                  setStatusText('View reset.');
+                }}
+              >
+                Reset view
+              </button>
             </div>
           </div>
 
           <div className="board-card">
             <WordSearchBoard
+              key={activePuzzleId}
               puzzle={activePuzzle}
               className="board-host"
-              responsive={{
-                autoResize: true,
-                mode: 'board-only',
-                minCellSize: 32,
-                maxCellSize: 72,
-                allowZoom: true,
-                allowPan: true,
-              }}
+              responsive={responsive}
               callbacks={callbacks}
-              onInstanceReady={(nextInstance) => {
-                setInstance(nextInstance);
-              }}
+              onInstanceReady={handleInstanceReady}
             />
           </div>
         </section>
